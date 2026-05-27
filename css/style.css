@@ -370,8 +370,9 @@ textarea {
 
 /* ========== MEAL CARDS ========== */
 .meal-card {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border);
+background: var(--bg-secondary);
+border: 1px solid var(--border);
+overflow: visible;
   border-radius: 10px;
   margin-bottom: 14px;
   overflow: visible;
