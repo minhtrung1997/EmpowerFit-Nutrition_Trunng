@@ -1,88 +1,114 @@
-# EmpowerFit Nutrition Planner
+# EmpowerFit Nutrition Planner 🇻🇳
 
-A free, self-hosted nutrition planning web app for EmpowerFit Health coaches.
+A free, self-hosted nutrition planning web app for Vietnamese health coaches.
 
-## Features
+## Live Features
 
-- TDEE calculation using Mifflin-St Jeor equation
-- Macro targets: 2.2g protein/kg, 0.8g fat/kg, remaining calories to carbs
-- 9 goal presets with calorie adjustments
-- Australian food database (Coles, Woolworths, Aldi + whole foods)
-- 6 meal slots (Breakfast, Morning Snack, Lunch, Afternoon Snack, Dinner, Evening Snack/Shake)
-- Real-time daily progress tracking
+- **TDEE calculation** using Mifflin-St Jeor equation
+- **Dual target formula**: Normal (2.2g/kg protein) or Herbalife Coach (1.75g/kg, kcal/kg approach)
+- **9 goal presets** with calorie adjustments (Fat Loss → Enhanced Athlete)
+- **3 food calculation modes**: Raw/Label, Calibrated (cooking-adjusted), Coach-Tuned (experience-based)
+- **553+ local foods** (USDA Foundation + Vietnamese Nutrition Institute + Herbalife)
+- **1,250+ Vietnamese dishes live search** via viendinhduong.vn API proxy
+- **6 meal slots** (Breakfast, Morning Snack, Lunch, Afternoon Snack, Dinner, Evening Snack)
+- Real-time daily progress tracking with progress bars
 - Custom calorie override
+- Cooking method calibration (boiled, steamed, grilled, fried, cooled)
+- Coach reverse-calibration from actual vs predicted totals
+- State auto-cached in localStorage (persists across refreshes)
 - Branded PDF export for clients
 - Micronutrient summary (fibre, sodium)
-- Coach notes section on PDF
 
-## Setup (GitHub Pages — Free Hosting)
+## Quick Start
 
-### Step 1: Create GitHub Account
+```bash
+python3 server.py
+# Open http://localhost:8000
+```
 
-1. Go to https://github.com
-2. Click "Sign up"
-3. Create your free account
+> `server.py` serves static files + proxies Vietnamese food API (CORS bypass).
 
-### Step 2: Create Repository
+## Project Structure
 
-1. Click the green "New" button
-2. Name it: `empowerfit-nutrition`
-3. Set to **Public**
-4. Click "Create repository"
+```
+├── index.html              # Single-page app
+├── server.py               # Python HTTP server + /api/vn-food proxy
+├── css/style.css           # Styles
+├── js/
+│   ├── app.js              # App logic, calibration, VN live search
+│   └── foods.js            # Food database + cooking factors
+├── docs/
+│   ├── LABNOTE.md          # Development log & research notes
+│   ├── Macronutrient_research_formulae.pdf  # Source research
+│   └── specs/
+│       └── function_calibration.md  # Calibration module spec
+├── raw_data/
+│   ├── FoodData_Central_foundation_food_json_2025-12-18.json  # USDA source
+│   ├── thanh phan dinh duong.json   # VN nutrition institute source
+│   └── convert_xls_to_json.py       # XLS→JSON converter
+├── scripts/
+│   ├── convert_usda.py     # USDA → foods.js merger
+│   └── convert_vn.py       # VN data → foods.js merger
+└── README.md
+```
 
-### Step 3: Upload Files
+## Calculation Modes
 
-1. In your new repo, click "uploading an existing file"
-2. Upload ALL files maintaining this structure:
-   ```
-   index.html
-   css/style.css
-   js/foods.js
-   js/app.js
-   ```
-3. Click "Commit changes"
+### Target Formula (affects daily targets)
+| Mode | Protein | Calories | Source |
+|------|---------|----------|--------|
+| Normal | 2.2 g/kg | Mifflin-St Jeor × activity + goal adj | Evidence-based |
+| Herbalife Coach | 1.75 g/kg | kcal/kg (26–38 depending on goal) | Coach practice |
 
-### Step 4: Enable GitHub Pages
+### Food Calibration (affects food macro display)
+| Mode | What it does |
+|------|-------------|
+| Raw/Label | Database values as-is (per 100g) |
+| Calibrated | Applies cooking retention factors, yield, oil uptake |
+| Coach-Tuned | Blanket correction factors from coach's assessed totals |
 
-1. Go to repo **Settings**
-2. Scroll to **Pages** (left sidebar)
-3. Under "Source" select **Deploy from a branch**
-4. Select branch: **main**, folder: **/ (root)**
-5. Click **Save**
+## Food Database Sources
 
-### Step 5: Access Your App
-
-Your app will be live at:
-`https://YOUR-USERNAME.github.io/empowerfit-nutrition`
-
-(Takes 1-2 minutes to go live after saving)
-
-## Usage
-
-1. Enter client details (name, age, sex, weight, height, activity, goal)
-2. Targets auto-calculate
-3. Override calories if needed
-4. Add foods to each meal slot using the search
-5. Click "Generate & Download Client PDF"
-6. Print or Save as PDF from your browser
+| Source | Foods | Type |
+|--------|-------|------|
+| USDA Foundation Foods 2025 | 323 | Per 100g, generic whole foods |
+| Vietnamese Nutrition Institute | 162 | Per 100g, traditional VN ingredients |
+| Herbalife (F1, PPP) | 2 | Per 100g powder |
+| Original (generic) | 66 | Per 100g, common items |
+| **viendinhduong.vn live API** | **1,250+** | Per 100g, VN dishes (online) |
 
 ## Updating the Food Database
 
-Edit `js/foods.js` to add new foods following the existing format:
+Edit `js/foods.js` or re-run conversion scripts:
 
-```javascript
-"Food Name (Brand)": {
-  protein: 0, carbs: 0, fat: 0, fibre: 0, sodium: 0, calories: 0,
-  category: "Protein", // Protein, Carbs, Fats, Vegetables, Supplements, Extras
-  unit: "g" // g or ml
-},
+```bash
+python3 scripts/convert_usda.py   # Re-merge USDA data
+python3 scripts/convert_vn.py     # Re-merge VN data
 ```
+
+Manual entry format:
+```javascript
+"Food Name": { protein: 0, carbs: 0, fat: 0, fibre: 0, sodium: 0, calories: 0, category: "Protein", unit: "g" },
+```
+
+Categories: `Protein`, `Carbs`, `Fats`, `Vegetables`, `Extras`
+
+## Development Notes
+
+See [docs/LABNOTE.md](docs/LABNOTE.md) for full development history and research notes.
+
+See [docs/specs/function_calibration.md](docs/specs/function_calibration.md) for the calibration module specification.
+
+## Deploy (GitHub Pages)
+
+1. Push to GitHub (public repo)
+2. Settings → Pages → Deploy from branch: `main`, folder: `/`
+3. Live at `https://YOUR-USERNAME.github.io/REPO-NAME`
+
+> **Note**: GitHub Pages won't support the VN live proxy. For full functionality, deploy with a backend (e.g., AWS Lambda, Vercel serverless function).
 
 ## Contact
 
-Marc Sandles — EmpowerFit Health
+EmpowerFit Health
 📞 0400 074 078
 ✉ Empowerfit77@gmail.com
-Instagram: @Empower_FitPT
-
-- python3 -m http.server 8000
