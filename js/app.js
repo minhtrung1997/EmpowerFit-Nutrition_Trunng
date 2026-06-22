@@ -232,6 +232,8 @@ async function searchVNFoods(query) {
     return (data.data || []).map(f => {
       const nutrients = {};
       (f.nutritional_components || []).forEach(n => { nutrients[n.key] = parseFloat(n.amount) || 0; });
+      const name = `${f.name_vi} - ${f.name_en}`;
+      const isLiquid = /sữa|nước|trà|cà phê|sinh tố|juice|milk|tea|coffee|smoothie|drink/i.test(name);
       const entry = {
         protein: nutrients['chat-dam'] || 0,
         carbs: nutrients['chat-bot-duong'] || 0,
@@ -240,9 +242,8 @@ async function searchVNFoods(query) {
         sodium: nutrients['natri'] || 0,
         calories: nutrients['nang-luong'] || 0,
         category: 'VN Dish',
-        unit: 'g'
+        unit: isLiquid ? 'ml' : 'g'
       };
-      const name = `${f.name_vi} - ${f.name_en}`;
       VN_FOOD_CACHE[name] = entry;
       return name;
     });
@@ -397,18 +398,16 @@ function renderMealItems(mealId) {
   container.innerHTML = items.map((item, idx) => {
     const macros = calculateFoodMacros(item.food, item.grams, item.cookingMethod);
     const unit = FOOD_DATABASE[item.food]?.unit || VN_FOOD_CACHE[item.food]?.unit || 'g';
+    const macroText = macros
+      ? `<span>${formatMacro(macros.calories)} kcal</span><span>P: ${formatMacro(macros.protein)}g</span><span>C: ${formatMacro(macros.carbs)}g</span><span>F: ${formatMacro(macros.fat)}g</span>`
+      : '<span style="color:var(--danger)">⚠ Data unavailable (re-search food)</span>';
     return `
       <div class="food-item">
         <div class="food-item-name">
           <span class="food-name">${item.food}</span>
-          <span class="food-amount">${item.grams}${unit}</span>
+          <span class="food-amount">${item.grams} ${unit}</span>
         </div>
-        <div class="food-item-macros">
-          <span>${formatMacro(macros.calories)} kcal</span>
-          <span>P: ${formatMacro(macros.protein)}g</span>
-          <span>C: ${formatMacro(macros.carbs)}g</span>
-          <span>F: ${formatMacro(macros.fat)}g</span>
-        </div>
+        <div class="food-item-macros">${macroText}</div>
         <button class="remove-btn" onclick="removeFoodItem('${mealId}', ${idx})">✕</button>
       </div>
     `;
@@ -446,6 +445,7 @@ function showSuggestions(mealId) {
             var nutrients = {};
             (f.nutritional_components || []).forEach(function(n) { nutrients[n.key] = parseFloat(n.amount) || 0; });
             var name = f.name_vi + ' - ' + f.name_en;
+            var isLiquid = /sữa|nước|trà|cà phê|sinh tố|juice|milk|tea|coffee|smoothie|drink/i.test(name);
             VN_FOOD_CACHE[name] = {
               protein: nutrients['chat-dam'] || 0,
               carbs: nutrients['chat-bot-duong'] || 0,
@@ -454,7 +454,7 @@ function showSuggestions(mealId) {
               sodium: nutrients['natri'] || 0,
               calories: nutrients['nang-luong'] || 0,
               category: 'VN Dish',
-              unit: 'g'
+              unit: isLiquid ? 'ml' : 'g'
             };
             return name;
           });
@@ -462,6 +462,7 @@ function showSuggestions(mealId) {
             var local = getFoodSuggestions(q);
             var combined = local.concat(vnResults).slice(0, 12);
             renderSuggestions(dropdown, mealId, combined);
+            saveStateToCache();
           }
         })
         .catch(function(e) { console.warn('VN search error:', e); });
@@ -637,8 +638,8 @@ function generatePDF() {
         .dt-item .val { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 800; color: #1a2e1a; }
         .dt-item .lbl { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: #4a7a4a; }
         .dt-item .diff { font-size: 11px; font-weight: 600; margin-top: 2px; }
-        .diff-over { color: #ff4444; }
-        .diff-under { color: #00ff88; }
+        .diff-over { color: #1565c0; }
+        .diff-under { color: #c62828; }
         .diff-ok { color: #2e7d32; }
 
         .micro-box { background: #e4ede4; border: 1px solid #a0c8a0; border-radius: 8px; padding: 14px 18px; margin-bottom: 18px; }
@@ -795,11 +796,20 @@ document.addEventListener('DOMContentLoaded', () => {
 // CACHE (localStorage)
 // ============================================================
 function saveStateToCache() {
-  try { localStorage.setItem('empowerfit_state', JSON.stringify(state)); } catch(e) {}
+  try {
+    localStorage.setItem('empowerfit_state', JSON.stringify(state));
+    localStorage.setItem('empowerfit_vn_cache', JSON.stringify(VN_FOOD_CACHE));
+  } catch(e) {}
 }
 
 function loadStateFromCache() {
   try {
+    // Restore VN food cache
+    const vnCache = localStorage.getItem('empowerfit_vn_cache');
+    if (vnCache) {
+      var parsed = JSON.parse(vnCache);
+      Object.keys(parsed).forEach(function(k) { VN_FOOD_CACHE[k] = parsed[k]; });
+    }
     const cached = localStorage.getItem('empowerfit_state');
     if (!cached) return;
     const saved = JSON.parse(cached);

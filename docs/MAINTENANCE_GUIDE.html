@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>Maintenance & Scale-Up Guide</title>
+<style>
+body { font-family: Arial, sans-serif; max-width: 800px; margin: 40px auto; padding: 0 20px; line-height: 1.6; color: #1a2e1a; }
+h1 { color: #2e7d32; border-bottom: 2px solid #2e7d32; padding-bottom: 8px; }
+h2 { color: #1b5e20; margin-top: 30px; }
+h3 { color: #2d5a2d; }
+table { border-collapse: collapse; width: 100%; margin: 10px 0; }
+th, td { border: 1px solid #a0c8a0; padding: 8px 12px; text-align: left; font-size: 13px; }
+th { background: #dceadc; }
+code { background: #e8f0e8; padding: 2px 5px; border-radius: 3px; font-size: 12px; }
+pre { background: #e8f0e8; padding: 12px; border-radius: 6px; overflow-x: auto; }
+pre code { background: none; }
+@media print { body { margin: 20px; } }
+</style></head><body><h1>Maintenance &amp; Scale-Up Guide</h1>
+<p>For a team of 1 IT developer + 4-5 Herbalife coaches.</p>
+<hr />
+<h2>Team Roles</h2>
+<table>
+<thead>
+<tr>
+<th>Person</th>
+<th>Responsibilities</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>IT (you)</strong></td>
+<td>Deploy, fix bugs, add features, manage server, update food database</td>
+</tr>
+<tr>
+<td><strong>Coaches</strong></td>
+<td>Use the app daily, report issues, request features, provide calibration data</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>1. Maintenance (Weekly)</h2>
+<h3>IT Tasks</h3>
+<ul>
+<li>[ ] Check server is running (<code>curl http://your-server/</code>)</li>
+<li>[ ] Check VN food API still responds (<code>/api/vn-food?name=pho</code>)</li>
+<li>[ ] Review any coach-reported bugs</li>
+<li>[ ] Clear old localStorage if coaches report strange behavior</li>
+</ul>
+<h3>Monthly</h3>
+<ul>
+<li>[ ] Update food database if new products added (edit <code>js/foods.js</code>)</li>
+<li>[ ] Backup the codebase (<code>git push</code>)</li>
+<li>[ ] Check if viendinhduong.vn API has changed structure</li>
+</ul>
+<h3>If something breaks</h3>
+<pre><code class="language-bash"># Redeploy (fixes most issues)
+ssh your-server
+cd /opt/nutrition-app
+git pull
+pkill -f server.py
+nohup python3 server.py &amp;
+</code></pre>
+<hr />
+<h2>2. Coach User Guide (share with coaches)</h2>
+<h3>Getting Started</h3>
+<ol>
+<li>Open the app URL in Chrome/Safari</li>
+<li>Fill in client details (name, weight, height, age, sex, activity, goal)</li>
+<li>Select <strong>Herbalife Coach</strong> formula (default)</li>
+<li>Add foods to each meal using the search box</li>
+<li>Type Vietnamese or English food names — online results appear after a moment</li>
+<li>Enter grams (or ml for liquids)</li>
+<li>Watch progress bars fill toward targets</li>
+</ol>
+<h3>Key Tips for Coaches</h3>
+<ul>
+<li><strong>Herbalife Coach mode</strong> uses your familiar 1.75g/kg protein formula</li>
+<li><strong>Coach-Tuned mode</strong>: After planning meals, click "⚙ Set Factors" to enter your assessed totals — the app learns your correction</li>
+<li><strong>Night mode</strong>: Moon icon in header</li>
+<li><strong>Print options</strong>: Client PDF (for client), Diary (for your records), Calc Log (for verification)</li>
+<li><strong>Clear Cache</strong>: Bottom button — use if the app behaves strangely after an update</li>
+</ul>
+<h3>Common Issues</h3>
+<table>
+<thead>
+<tr>
+<th>Problem</th>
+<th>Fix</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Foods not showing</td>
+<td>Check internet connection (VN search needs internet)</td>
+</tr>
+<tr>
+<td>Numbers look wrong after reload</td>
+<td>Click "Clear Cache &amp; Reload"</td>
+</tr>
+<tr>
+<td>App blank on phone</td>
+<td>Hard refresh (pull down to refresh)</td>
+</tr>
+<tr>
+<td>PDF not opening</td>
+<td>Allow popups in browser</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>3. Research &amp; Database Updates</h2>
+<h3>Adding New Foods</h3>
+<p>Edit <code>js/foods.js</code>, add entry:</p>
+<pre><code class="language-javascript">&quot;Tên thực phẩm&quot;: { protein: X, carbs: X, fat: X, fibre: X, sodium: X, calories: X, category: &quot;Protein&quot;, unit: &quot;g&quot; },
+</code></pre>
+<p>Categories: <code>Protein</code>, <code>Carbs</code>, <code>Fats</code>, <code>Vegetables</code>, <code>Extras</code></p>
+<h3>Adding Herbalife Products</h3>
+<p>When new products launch, add with per-100g values:</p>
+<pre><code class="language-javascript">&quot;Herbalife Product Name&quot;: { protein: X, carbs: X, fat: X, fibre: 0, sodium: X, calories: X, category: &quot;Protein&quot;, unit: &quot;g&quot; },
+</code></pre>
+<h3>Research Sources</h3>
+<ul>
+<li><strong>Vietnamese foods</strong>: viendinhduong.vn (already integrated live)</li>
+<li><strong>USDA updates</strong>: fdc.nal.usda.gov (re-run <code>scripts/convert_usda.py</code>)</li>
+<li><strong>Herbalife labels</strong>: Check product packaging for Vietnam-specific formulations</li>
+<li><strong>Cooking factors</strong>: <code>docs/Macronutrient_research_formulae.pdf</code> (indexed in knowledge base)</li>
+</ul>
+<hr />
+<h2>4. Feature Roadmap (v2)</h2>
+<h3>Short-term (1-2 months)</h3>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Effort</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Vietnamese language toggle</td>
+<td>2 days</td>
+<td>High — coaches prefer Vietnamese UI</td>
+</tr>
+<tr>
+<td>Portion presets (1 bowl phở = 400g)</td>
+<td>1 day</td>
+<td>High — saves time</td>
+</tr>
+<tr>
+<td>Favourite foods per coach</td>
+<td>1 day</td>
+<td>Medium — faster meal planning</td>
+</tr>
+<tr>
+<td>Export to Excel</td>
+<td>1 day</td>
+<td>Medium — coaches like spreadsheets</td>
+</tr>
+</tbody>
+</table>
+<h3>Medium-term (3-6 months)</h3>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Effort</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>User accounts (login)</td>
+<td>1 week</td>
+<td>High — each coach saves their clients</td>
+</tr>
+<tr>
+<td>Client history (track weight over time)</td>
+<td>1 week</td>
+<td>High — show progress</td>
+</tr>
+<tr>
+<td>Recipe builder (combine foods into meals)</td>
+<td>3 days</td>
+<td>High — reusable meal templates</td>
+</tr>
+<tr>
+<td>Mineral/vitamin tracking</td>
+<td>2 days</td>
+<td>Medium — for detailed plans</td>
+</tr>
+</tbody>
+</table>
+<h3>Long-term (6-12 months)</h3>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Effort</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Mobile app (PWA)</td>
+<td>2 weeks</td>
+<td>High — offline + install on phone</td>
+</tr>
+<tr>
+<td>AI meal suggestion ("suggest 500kcal lunch")</td>
+<td>1 week</td>
+<td>High — powered by GPT/Claude API</td>
+</tr>
+<tr>
+<td>Multi-language (EN/VN)</td>
+<td>3 days</td>
+<td>Medium</td>
+</tr>
+<tr>
+<td>Admin dashboard (usage stats)</td>
+<td>1 week</td>
+<td>Low — nice to have</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>5. Scaling for 5 Coaches</h2>
+<h3>Current Architecture (works for 5 users)</h3>
+<pre><code>Coach 1 (phone) ─┐
+Coach 2 (laptop) ─┼── Server (1 instance) ── VN Food API
+Coach 3 (tablet) ─┤
+Coach 4 (phone) ──┤
+Coach 5 (laptop) ─┘
+</code></pre>
+<p><strong>No database needed</strong> — each coach's data stays in their own browser (localStorage). They don't interfere with each other.</p>
+<h3>When to Scale Up</h3>
+<table>
+<thead>
+<tr>
+<th>Users</th>
+<th>Architecture</th>
+<th>Cost</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1-10</td>
+<td>Single server, localStorage</td>
+<td>$5-7/month</td>
+</tr>
+<tr>
+<td>10-50</td>
+<td>Add user accounts + database (PostgreSQL)</td>
+<td>$15-30/month</td>
+</tr>
+<tr>
+<td>50+</td>
+<td>Load balancer + multiple servers</td>
+<td>$50+/month</td>
+</tr>
+</tbody>
+</table>
+<h3>For 5 coaches specifically:</h3>
+<ul>
+<li><strong>No scaling needed</strong> — current setup handles it fine</li>
+<li><strong>Each coach bookmarks the URL</strong> on their phone/laptop</li>
+<li><strong>Each coach's data is independent</strong> (browser localStorage)</li>
+<li><strong>Downside</strong>: If coach clears browser data or switches device, their meal plans are lost</li>
+</ul>
+<h3>Future improvement for data persistence:</h3>
+<p>When you add user accounts, store data server-side in a JSON file per coach (simplest) or PostgreSQL (proper). This lets coaches access their data from any device.</p>
+<hr />
+<h2>6. Cost Estimate</h2>
+<h3>Hosting (pick one)</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Cost</th>
+<th>Uptime</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Render free</td>
+<td>$0</td>
+<td>Sleeps after 15min</td>
+</tr>
+<tr>
+<td>Fly.io free</td>
+<td>$0</td>
+<td>Always on (Singapore)</td>
+</tr>
+<tr>
+<td>Heroku Basic</td>
+<td>$7/month</td>
+<td>Always on</td>
+</tr>
+<tr>
+<td>AWS EC2 t3.micro</td>
+<td>$8/month</td>
+<td>Always on</td>
+</tr>
+<tr>
+<td>Oracle Cloud</td>
+<td>$0</td>
+<td>Always on (forever free)</td>
+</tr>
+</tbody>
+</table>
+<h3>Domain + SSL</h3>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Cost</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Domain (.link or .site)</td>
+<td>$3-5/year</td>
+</tr>
+<tr>
+<td>SSL (Let's Encrypt)</td>
+<td>Free</td>
+</tr>
+</tbody>
+</table>
+<h3>Total: $0-12/month for 5 coaches</h3>
+<hr />
+<h2>7. Backup Strategy</h2>
+<pre><code class="language-bash"># Weekly backup (IT runs this)
+cd /path/to/EmpowerFit-Nutrition_Trunng
+git add -A
+git commit -m &quot;backup $(date +%Y-%m-%d)&quot;
+git push
+</code></pre>
+<p>The entire app is in Git. If anything breaks, you can always:</p>
+<pre><code class="language-bash">git log --oneline          # see history
+git checkout v1.0.0        # go back to stable version
+</code></pre>
+<hr />
+<h2>8. Communication with Coaches</h2>
+<h3>Recommended Setup</h3>
+<ul>
+<li><strong>WhatsApp/Zalo group</strong>: Coaches report bugs, request features</li>
+<li><strong>Simple feedback form</strong>: "What food is missing?" "What's confusing?"</li>
+<li><strong>Monthly 15-min call</strong>: Show new features, collect feedback</li>
+</ul>
+<h3>Coach Feedback Template</h3>
+<pre><code>Tên coach: ___
+Ngày: ___
+Vấn đề / yêu cầu: ___
+Mức độ quan trọng (1-5): ___
+</code></pre>
+<hr />
+<h2>9. Security Notes</h2>
+<ul>
+<li><strong>No sensitive data on server</strong> — all client info stays in browser</li>
+<li><strong>No passwords</strong> — no login system yet</li>
+<li><strong>API proxy</strong>: viendinhduong.vn data is public, no auth needed</li>
+<li><strong>When you add login later</strong>: Use HTTPS, hash passwords, never store them plain</li>
+</ul>
+<hr />
+<h2>10. Getting Help</h2>
+<table>
+<thead>
+<tr>
+<th>Need</th>
+<th>Where</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Bug in code</td>
+<td>Open Kiro CLI in the project, describe the bug</td>
+</tr>
+<tr>
+<td>New feature</td>
+<td>Open Kiro CLI, describe what you want</td>
+</tr>
+<tr>
+<td>Nutrition research</td>
+<td>ChatGPT/Claude — ask about formulas, then verify with literature</td>
+</tr>
+<tr>
+<td>Deployment issues</td>
+<td>Check <code>docs/DEPLOYMENT.md</code> or <code>docs/DEPLOYMENT_HEROKU.md</code></td>
+</tr>
+<tr>
+<td>AI/tool concepts</td>
+<td>Read <code>docs/AI_BEGINNER_GUIDE.md</code></td>
+</tr>
+</tbody>
+</table></body></html>
