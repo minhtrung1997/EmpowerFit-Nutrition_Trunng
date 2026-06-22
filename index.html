@@ -555,10 +555,11 @@
       </div>
 
       <!-- PDF BUTTON -->
-      <div style="margin-top: 24px">
-        <button class="btn btn-pdf" onclick="generatePDF()">
-          ⬇ Generate &amp; Download Client PDF
-        </button>
+      <div class="print-buttons-grid">
+        <button class="btn btn-pdf" onclick="generatePDF()">⬇ Client PDF</button>
+        <button class="btn btn-pdf" onclick="printDiary()">📋 Diary</button>
+        <button class="btn btn-pdf" onclick="printCalcLog()">📐 Calc Log</button>
+      </div>
         <p
           style="
             text-align: center;
@@ -654,7 +655,7 @@
       </div>
     </div>
 
-    <script src="js/foods.js?v=11"></script>
-    <script src="js/app.js?v=11"></script>
+    <script src="js/foods.js?v=13"></script>
+    <script src="js/app.js?v=13"></script>
   </body>
 </html>

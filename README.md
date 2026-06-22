@@ -1,23 +1,19 @@
-# EmpowerFit Nutrition Planner 🇻🇳
+# 🇻🇳 House of Health Well Pro — Nutrition Planner
 
-A free, self-hosted nutrition planning web app for Vietnamese health coaches.
+A self-hosted nutrition planning web app for Vietnamese health coaches, powered by Herbalife-style meal planning and a live Vietnamese food database.
 
-## Live Features
+## Features
 
-- **TDEE calculation** using Mifflin-St Jeor equation
-- **Dual target formula**: Normal (2.2g/kg protein) or Herbalife Coach (1.75g/kg, kcal/kg approach)
-- **9 goal presets** with calorie adjustments (Fat Loss → Enhanced Athlete)
-- **3 food calculation modes**: Raw/Label, Calibrated (cooking-adjusted), Coach-Tuned (experience-based)
-- **553+ local foods** (USDA Foundation + Vietnamese Nutrition Institute + Herbalife)
-- **1,250+ Vietnamese dishes live search** via viendinhduong.vn API proxy
-- **6 meal slots** (Breakfast, Morning Snack, Lunch, Afternoon Snack, Dinner, Evening Snack)
-- Real-time daily progress tracking with progress bars
-- Custom calorie override
-- Cooking method calibration (boiled, steamed, grilled, fried, cooled)
-- Coach reverse-calibration from actual vs predicted totals
-- State auto-cached in localStorage (persists across refreshes)
-- Branded PDF export for clients
-- Micronutrient summary (fibre, sodium)
+- **Dual target formula**: Herbalife Coach (1.75g/kg, kcal/kg) or Normal (2.2g/kg, Mifflin-St Jeor)
+- **3 food calibration modes**: Raw/Label, Calibrated (cooking-adjusted), Coach-Tuned (reverse-calibrated)
+- **553+ local foods** (USDA + Vietnamese Nutrition Institute + Herbalife F1/PPP)
+- **1,250+ Vietnamese dishes** via live search (viendinhduong.vn API)
+- **9 goal presets** (Fat Loss → Enhanced Athlete)
+- **6 meal slots** with real-time progress tracking
+- **Night mode** toggle
+- **3 print outputs**: Client PDF, Diary record, Calculation Log
+- **Mobile responsive**
+- **State cached** in localStorage (persists across refreshes)
 
 ## Quick Start
 
@@ -26,89 +22,47 @@ python3 server.py
 # Open http://localhost:8000
 ```
 
-> `server.py` serves static files + proxies Vietnamese food API (CORS bypass).
-
 ## Project Structure
 
 ```
 ├── index.html              # Single-page app
-├── server.py               # Python HTTP server + /api/vn-food proxy
-├── css/style.css           # Styles
+├── server.py               # HTTP server + /api/vn-food proxy
+├── css/style.css           # Styles (light + dark theme)
 ├── js/
-│   ├── app.js              # App logic, calibration, VN live search
+│   ├── app.js              # App logic, calibration, VN search, print
 │   └── foods.js            # Food database + cooking factors
 ├── docs/
-│   ├── LABNOTE.md          # Development log & research notes
-│   ├── Macronutrient_research_formulae.pdf  # Source research
+│   ├── LABNOTE.md          # Development log
+│   ├── DEPLOYMENT.md       # AWS deployment guide
+│   ├── DEPLOYMENT_HEROKU.md # Heroku deployment guide
+│   ├── RELEASE.md          # Release notes
+│   ├── Macronutrient_research_formulae.pdf
+│   ├── images/             # Logo + background
 │   └── specs/
-│       └── function_calibration.md  # Calibration module spec
-├── raw_data/
-│   ├── FoodData_Central_foundation_food_json_2025-12-18.json  # USDA source
-│   ├── thanh phan dinh duong.json   # VN nutrition institute source
-│   └── convert_xls_to_json.py       # XLS→JSON converter
-├── scripts/
-│   ├── convert_usda.py     # USDA → foods.js merger
-│   └── convert_vn.py       # VN data → foods.js merger
+│       └── function_calibration.md
+├── raw_data/               # Source databases
+├── scripts/                # DB conversion scripts
 └── README.md
 ```
 
 ## Calculation Modes
 
-### Target Formula (affects daily targets)
-| Mode | Protein | Calories | Source |
-|------|---------|----------|--------|
-| Normal | 2.2 g/kg | Mifflin-St Jeor × activity + goal adj | Evidence-based |
-| Herbalife Coach | 1.75 g/kg | kcal/kg (26–38 depending on goal) | Coach practice |
+| Target Formula | Protein | Calories |
+|---|---|---|
+| Herbalife Coach | 1.75 g/kg | kcal/kg (26–38 by goal) |
+| Normal | 2.2 g/kg | Mifflin-St Jeor × activity + goal adj |
 
-### Food Calibration (affects food macro display)
-| Mode | What it does |
-|------|-------------|
-| Raw/Label | Database values as-is (per 100g) |
-| Calibrated | Applies cooking retention factors, yield, oil uptake |
-| Coach-Tuned | Blanket correction factors from coach's assessed totals |
+| Food Calibration | Effect |
+|---|---|
+| Raw/Label | Database values as-is |
+| Calibrated | Cooking retention factors + yield + oil uptake |
+| Coach-Tuned | Blanket correction from coach's assessed totals |
 
-## Food Database Sources
+## Deploy
 
-| Source | Foods | Type |
-|--------|-------|------|
-| USDA Foundation Foods 2025 | 323 | Per 100g, generic whole foods |
-| Vietnamese Nutrition Institute | 162 | Per 100g, traditional VN ingredients |
-| Herbalife (F1, PPP) | 2 | Per 100g powder |
-| Original (generic) | 66 | Per 100g, common items |
-| **viendinhduong.vn live API** | **1,250+** | Per 100g, VN dishes (online) |
-
-## Updating the Food Database
-
-Edit `js/foods.js` or re-run conversion scripts:
-
-```bash
-python3 scripts/convert_usda.py   # Re-merge USDA data
-python3 scripts/convert_vn.py     # Re-merge VN data
-```
-
-Manual entry format:
-```javascript
-"Food Name": { protein: 0, carbs: 0, fat: 0, fibre: 0, sodium: 0, calories: 0, category: "Protein", unit: "g" },
-```
-
-Categories: `Protein`, `Carbs`, `Fats`, `Vegetables`, `Extras`
-
-## Development Notes
-
-See [docs/LABNOTE.md](docs/LABNOTE.md) for full development history and research notes.
-
-See [docs/specs/function_calibration.md](docs/specs/function_calibration.md) for the calibration module specification.
-
-## Deploy (GitHub Pages)
-
-1. Push to GitHub (public repo)
-2. Settings → Pages → Deploy from branch: `main`, folder: `/`
-3. Live at `https://YOUR-USERNAME.github.io/REPO-NAME`
-
-> **Note**: GitHub Pages won't support the VN live proxy. For full functionality, deploy with a backend (e.g., AWS Lambda, Vercel serverless function).
+See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) (AWS) or [docs/DEPLOYMENT_HEROKU.md](docs/DEPLOYMENT_HEROKU.md) (Heroku).
 
 ## Contact
 
-EmpowerFit Health
-📞 0400 074 078
-✉ Empowerfit77@gmail.com
+House of Health Well Pro
+📍 85 Tan Cang St

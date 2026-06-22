@@ -543,13 +543,34 @@ overflow: visible;
 
 /* ========== RESPONSIVE ========== */
 @media (max-width: 600px) {
-  .progress-grid { grid-template-columns: repeat(2, 1fr); }
-  .form-grid { grid-template-columns: 1fr 1fr; }
-  .food-search-row { grid-template-columns: 1fr 70px auto; }
-  .food-item-macros { display: none; }
-  .meal-totals-mini { gap: 6px; font-size: 10px; }
-  .header-text h1 { font-size: 20px; }
-  .header-logo { width: 52px; height: 52px; }
+  .app-wrapper { padding: 0 8px 40px; }
+  .app-header { padding: 14px 10px; gap: 10px; border-radius: 8px; flex-wrap: wrap; }
+  .header-text h1 { font-size: 18px; }
+  .header-text h2 { font-size: 13px; }
+  .header-logo { width: 44px; height: 44px; }
+  .btn-theme-toggle { width: 30px; height: 30px; font-size: 14px; }
+  .section-title { font-size: 15px; }
+  .form-grid { grid-template-columns: 1fr; }
+  .calc-results { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .progress-grid { grid-template-columns: 1fr; }
+  .target-formula-row { flex-direction: column; gap: 6px; font-size: 12px; }
+  .calibration-row { flex-direction: column; align-items: flex-start; gap: 6px; padding: 6px 10px; }
+  .calibration-toggle { flex-wrap: wrap; gap: 8px; font-size: 12px; }
+  .custom-cal-row { flex-wrap: wrap; gap: 6px; }
+  .food-search-row { grid-template-columns: 1fr; gap: 6px; }
+  .food-search-row input, .food-search-row select, .food-search-row button { width: 100%; }
+  .search-wrapper { width: 100%; }
+  .cook-method-select { width: 100% !important; }
+  .food-item { flex-direction: column; align-items: flex-start; gap: 4px; }
+  .food-item-macros { display: block; font-size: 11px; }
+  .meal-totals-mini { gap: 4px; font-size: 10px; flex-wrap: wrap; }
+  .suggestions-dropdown { font-size: 12px; }
+  .sug-macros { display: none; }
+  .modal-box { padding: 16px; width: 95%; }
+  .calib-table { font-size: 11px; }
+  .calib-table input { width: 55px; }
+  .card { padding: 12px; }
+  .day-totals-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
 /* Source tags in food suggestions */
@@ -583,3 +604,10 @@ overflow: visible;
 [data-theme="dark"] .btn-theme-toggle { background: rgba(0,0,0,0.4); }
 [data-theme="dark"] .app-header { background-blend-mode: multiply; background-color: rgba(0,0,0,0.5); }
 .app-header { background-blend-mode: overlay; background-color: rgba(255,255,255,0.4); }
+
+/* Print buttons responsive */
+@media (max-width: 600px) {
+  .print-buttons-grid { grid-template-columns: 1fr !important; }
+}
+
+.print-buttons-grid { margin-top: 24px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
