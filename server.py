@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 """Static file server + CORS proxy for viendinhduong.vn API."""
-import http.server, urllib.request, json
-from urllib.parse import urlparse, parse_qs
+import http.server
+import json
+import os
+import urllib.parse
+import urllib.request
+from urllib.parse import parse_qs, urlparse
 
 class Handler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
@@ -27,4 +31,5 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             super().do_GET()
 
 if __name__ == '__main__':
-    http.server.HTTPServer(('', 8000), Handler).serve_forever()
+    port = int(os.environ.get('PORT', 8000))
+    http.server.HTTPServer(('', port), Handler).serve_forever()
