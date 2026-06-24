@@ -165,8 +165,7 @@
         <div class="calibration-row">
           <label>Calculation Mode:</label>
           <div class="calibration-toggle">
-          <label><input type="radio" name="calibMode" value="coach" checked onchange="setCalibrationMode('coach')"> Coach-Tuned</label>
-          <label><input type="radio" name="calibMode" value="calibrated" onchange="setCalibrationMode('calibrated')"> Calibrated</label>
+          <label><input type="radio" name="calibMode" value="coach" checked onchange="setCalibrationMode('coach')"> Coach Prep</label>
           <label><input type="radio" name="calibMode" value="raw" onchange="setCalibrationMode('raw')"> Raw/Label</label>
           <button class="btn btn-secondary btn-sm" id="coachCalibBtn" onclick="openCoachCalibModal()">⚙ Set Factors</button>
         </div>
@@ -269,13 +268,9 @@
               class="cook-method-select"
               style="display: none"
             >
-              <option value="raw">Raw</option>
-              <option value="boiled">Boiled</option>
-              <option value="steamed">Steamed</option>
-              <option value="grilled">Grilled</option>
-              <option value="pan_fried">Pan-fried</option>
-              <option value="deep_fried">Deep-fried</option>
-              <option value="cooled">Cooled</option>
+              <option value="fresh">Tươi</option>
+              <option value="moderate">Nấu vừa</option>
+              <option value="intense">Nấu kỹ</option>
             </select>
             <button class="btn btn-primary" onclick="addFoodItem('breakfast')">
               Add
@@ -323,13 +318,9 @@
               class="cook-method-select"
               style="display: none"
             >
-              <option value="raw">Raw</option>
-              <option value="boiled">Boiled</option>
-              <option value="steamed">Steamed</option>
-              <option value="grilled">Grilled</option>
-              <option value="pan_fried">Pan-fried</option>
-              <option value="deep_fried">Deep-fried</option>
-              <option value="cooled">Cooled</option>
+              <option value="fresh">Tươi</option>
+              <option value="moderate">Nấu vừa</option>
+              <option value="intense">Nấu kỹ</option>
             </select>
             <button class="btn btn-primary" onclick="addFoodItem('snack1')">
               Add
@@ -377,13 +368,9 @@
               class="cook-method-select"
               style="display: none"
             >
-              <option value="raw">Raw</option>
-              <option value="boiled">Boiled</option>
-              <option value="steamed">Steamed</option>
-              <option value="grilled">Grilled</option>
-              <option value="pan_fried">Pan-fried</option>
-              <option value="deep_fried">Deep-fried</option>
-              <option value="cooled">Cooled</option>
+              <option value="fresh">Tươi</option>
+              <option value="moderate">Nấu vừa</option>
+              <option value="intense">Nấu kỹ</option>
             </select>
             <button class="btn btn-primary" onclick="addFoodItem('lunch')">
               Add
@@ -431,13 +418,9 @@
               class="cook-method-select"
               style="display: none"
             >
-              <option value="raw">Raw</option>
-              <option value="boiled">Boiled</option>
-              <option value="steamed">Steamed</option>
-              <option value="grilled">Grilled</option>
-              <option value="pan_fried">Pan-fried</option>
-              <option value="deep_fried">Deep-fried</option>
-              <option value="cooled">Cooled</option>
+              <option value="fresh">Tươi</option>
+              <option value="moderate">Nấu vừa</option>
+              <option value="intense">Nấu kỹ</option>
             </select>
             <button class="btn btn-primary" onclick="addFoodItem('snack2')">
               Add
@@ -485,13 +468,9 @@
               class="cook-method-select"
               style="display: none"
             >
-              <option value="raw">Raw</option>
-              <option value="boiled">Boiled</option>
-              <option value="steamed">Steamed</option>
-              <option value="grilled">Grilled</option>
-              <option value="pan_fried">Pan-fried</option>
-              <option value="deep_fried">Deep-fried</option>
-              <option value="cooled">Cooled</option>
+              <option value="fresh">Tươi</option>
+              <option value="moderate">Nấu vừa</option>
+              <option value="intense">Nấu kỹ</option>
             </select>
             <button class="btn btn-primary" onclick="addFoodItem('dinner')">
               Add
@@ -539,13 +518,9 @@
               class="cook-method-select"
               style="display: none"
             >
-              <option value="raw">Raw</option>
-              <option value="boiled">Boiled</option>
-              <option value="steamed">Steamed</option>
-              <option value="grilled">Grilled</option>
-              <option value="pan_fried">Pan-fried</option>
-              <option value="deep_fried">Deep-fried</option>
-              <option value="cooled">Cooled</option>
+              <option value="fresh">Tươi</option>
+              <option value="moderate">Nấu vừa</option>
+              <option value="intense">Nấu kỹ</option>
             </select>
             <button class="btn btn-primary" onclick="addFoodItem('snack3')">
               Add
@@ -583,68 +558,35 @@
       <div class="modal-box">
         <h3>Coach Calibration</h3>
         <p style="font-size: 12px; color: #666">
-          Enter your assessed actual totals for today's plan. The app will
-          deduce correction factors.
+          Set macro factors for fresh ingredients. Herbalife products are never
+          adjusted.
         </p>
         <table class="calib-table">
           <tr>
-            <th></th>
-            <th>App (Raw)</th>
-            <th>Coach (Actual)</th>
-            <th>Factor</th>
+            <th>Prep</th>
+            <th>Calories factor</th>
+            <th>Protein factor</th>
           </tr>
           <tr>
-            <td>Calories</td>
-            <td id="calib_app_cal">0</td>
+            <td>Nấu vừa</td>
             <td>
-              <input type="number" id="calib_coach_cal" placeholder="kcal" />
+              <input type="number" id="factor_moderate_cal" value="1.5" step="0.05" min="0" />
             </td>
-            <td id="calib_factor_cal">—</td>
+            <td>
+              <input type="number" id="factor_moderate_pro" value="0.667" step="0.01" min="0" />
+            </td>
           </tr>
           <tr>
-            <td>Protein</td>
-            <td id="calib_app_pro">0</td>
+            <td>Nấu kỹ</td>
             <td>
-              <input
-                type="number"
-                id="calib_coach_pro"
-                placeholder="g"
-                step="0.1"
-              />
+              <input type="number" id="factor_intense_cal" value="2" step="0.05" min="0" />
             </td>
-            <td id="calib_factor_pro">—</td>
-          </tr>
-          <tr>
-            <td>Fat</td>
-            <td id="calib_app_fat">0</td>
             <td>
-              <input
-                type="number"
-                id="calib_coach_fat"
-                placeholder="g"
-                step="0.1"
-              />
+              <input type="number" id="factor_intense_pro" value="0.5" step="0.01" min="0" />
             </td>
-            <td id="calib_factor_fat">—</td>
-          </tr>
-          <tr>
-            <td>Carbs</td>
-            <td id="calib_app_carb">0</td>
-            <td>
-              <input
-                type="number"
-                id="calib_coach_carb"
-                placeholder="g"
-                step="0.1"
-              />
-            </td>
-            <td id="calib_factor_carb">—</td>
           </tr>
         </table>
         <div class="modal-actions">
-          <button class="btn btn-primary" onclick="calculateCoachFactors()">
-            Calculate Factors
-          </button>
           <button class="btn btn-primary" onclick="saveCoachFactors()">
             Save & Apply
           </button>

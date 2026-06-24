@@ -8,10 +8,49 @@ let state = {
   meals: { breakfast: [], snack1: [], lunch: [], snack2: [], dinner: [], snack3: [] },
   targets: null,
   customCalories: null,
-  calibrationMode: 'coach',  // 'raw' | 'calibrated' | 'coach'
-  coachFactors: null,       // { calories: 0.89, protein: 0.90, fat: 0.83, carbs: 0.94 }
+  calibrationMode: 'coach',  // 'raw' | 'coach'
+  coachFactors: null,       // { moderate: { calories, protein }, intense: { calories, protein } }
   targetFormula: 'herbalife'   // 'normal' | 'herbalife'
 };
+
+const DEFAULT_COACH_FACTORS = {
+  moderate: { calories: 1.5, protein: 1 / 1.5 },
+  intense: { calories: 2, protein: 0.5 }
+};
+
+const PREP_LABELS = {
+  fresh: 'Tươi',
+  moderate: 'Nấu vừa',
+  intense: 'Nấu kỹ',
+  raw: 'Tươi',
+  boiled: 'Nấu vừa',
+  steamed: 'Nấu vừa',
+  pan_fried: 'Nấu vừa',
+  cooled: 'Tươi',
+  grilled: 'Nấu kỹ',
+  deep_fried: 'Nấu kỹ'
+};
+
+function normalizePrepMethod(method) {
+  if (method === 'boiled' || method === 'steamed' || method === 'pan_fried') return 'moderate';
+  if (method === 'grilled' || method === 'deep_fried') return 'intense';
+  return method === 'moderate' || method === 'intense' ? method : 'fresh';
+}
+
+function getCoachFactors() {
+  if (!state.coachFactors || !state.coachFactors.moderate || !state.coachFactors.intense) {
+    return DEFAULT_COACH_FACTORS;
+  }
+  return state.coachFactors;
+}
+
+function isHerbalifeFood(foodName, food) {
+  return /^Herbalife\b/i.test(foodName) || food?.brand === 'Herbalife';
+}
+
+function getPrepLabel(method) {
+  return PREP_LABELS[normalizePrepMethod(method)] || 'Tươi';
+}
 
 // ============================================================
 // CALCULATIONS
@@ -53,13 +92,6 @@ function calculateTargets(weight, tdee, goalKey, customCals = null) {
     }
   }
 
-  // Coach-Tuned calibration on targets
-  if (state.calibrationMode === 'coach' && state.coachFactors) {
-    targetCals = Math.round(targetCals * state.coachFactors.calories);
-    protein = Math.round(protein * state.coachFactors.protein);
-    fat = Math.round(fat * state.coachFactors.fat);
-  }
-
   const proteinCals = protein * 4;
   const fatCals = fat * 9;
   const carbCals = targetCals - proteinCals - fatCals;
@@ -79,26 +111,16 @@ function calculateFoodMacros(foodName, grams, cookingMethod) {
   let fibre = food.fibre * ratio;
   let sodium = food.sodium * ratio;
 
-  // Mode: Calibrated — apply cooking factors
-  if (state.calibrationMode === 'calibrated' && cookingMethod && cookingMethod !== 'raw') {
-    const factors = (COOKING_FACTORS[cookingMethod] || {})[food.category];
+  let calories = food.calories * ratio;
+
+  // Herbalife products are label-based and never adjusted.
+  if (state.calibrationMode === 'coach' && !isHerbalifeFood(foodName, food)) {
+    const prep = normalizePrepMethod(cookingMethod);
+    const factors = getCoachFactors()[prep];
     if (factors) {
-      protein *= factors.rf_protein;
-      fat = fat * factors.rf_fat + (factors.oil_uptake * (food.unit === 'serving' ? grams : grams / 100));
-      carbs = carbs * factors.rf_carbs - (factors.rs_delta * (food.unit === 'serving' ? grams : grams / 100));
-      if (carbs < 0) carbs = 0;
+      calories *= factors.calories;
+      protein *= factors.protein;
     }
-  }
-
-  // Calculate calories from adjusted macros
-  let calories = 4 * protein + 9 * fat + 4 * carbs;
-
-  // Mode: Coach — apply blanket factors
-  if (state.calibrationMode === 'coach' && state.coachFactors) {
-    calories *= state.coachFactors.calories;
-    protein *= state.coachFactors.protein;
-    fat *= state.coachFactors.fat;
-    carbs *= state.coachFactors.carbs;
   }
 
   // If raw mode, use original calorie value from DB
@@ -120,10 +142,11 @@ function calculateFoodMacros(foodName, grams, cookingMethod) {
 // CALIBRATION MODE CONTROLS
 // ============================================================
 function setCalibrationMode(mode) {
+  if (mode !== 'coach' && mode !== 'raw') mode = 'coach';
   state.calibrationMode = mode;
   // Show/hide cooking method dropdowns
   document.querySelectorAll('.cook-method-select').forEach(el => {
-    el.style.display = mode === 'calibrated' ? 'inline-block' : 'none';
+    el.style.display = mode === 'coach' ? 'inline-block' : 'none';
   });
   // Show/hide coach button
   document.getElementById('coachCalibBtn').style.display = mode === 'coach' ? 'inline-block' : 'none';
@@ -139,11 +162,11 @@ function setTargetFormula(formula) {
 }
 
 function openCoachCalibModal() {
-  const totals = getDayTotals();
-  document.getElementById('calib_app_cal').textContent = Math.round(totals.calories);
-  document.getElementById('calib_app_pro').textContent = formatMacro(totals.protein);
-  document.getElementById('calib_app_fat').textContent = formatMacro(totals.fat);
-  document.getElementById('calib_app_carb').textContent = formatMacro(totals.carbs);
+  const factors = getCoachFactors();
+  document.getElementById('factor_moderate_cal').value = factors.moderate.calories;
+  document.getElementById('factor_moderate_pro').value = Math.round(factors.moderate.protein * 1000) / 1000;
+  document.getElementById('factor_intense_cal').value = factors.intense.calories;
+  document.getElementById('factor_intense_pro').value = Math.round(factors.intense.protein * 1000) / 1000;
   document.getElementById('coachCalibModal').style.display = 'flex';
 }
 
@@ -152,39 +175,26 @@ function closeCoachCalibModal() {
 }
 
 function calculateCoachFactors() {
-  const appCal = parseFloat(document.getElementById('calib_app_cal').textContent) || 1;
-  const appPro = parseFloat(document.getElementById('calib_app_pro').textContent) || 1;
-  const appFat = parseFloat(document.getElementById('calib_app_fat').textContent) || 1;
-  const appCarb = parseFloat(document.getElementById('calib_app_carb').textContent) || 1;
-
-  const coachCal = parseFloat(document.getElementById('calib_coach_cal').value) || appCal;
-  const coachPro = parseFloat(document.getElementById('calib_coach_pro').value) || appPro;
-  const coachFat = parseFloat(document.getElementById('calib_coach_fat').value) || appFat;
-  const coachCarb = parseFloat(document.getElementById('calib_coach_carb').value) || appCarb;
-
-  const factors = {
-    calories: Math.round((coachCal / appCal) * 1000) / 1000,
-    protein: Math.round((coachPro / appPro) * 1000) / 1000,
-    fat: Math.round((coachFat / appFat) * 1000) / 1000,
-    carbs: Math.round((coachCarb / appCarb) * 1000) / 1000
-  };
-
-  document.getElementById('calib_factor_cal').textContent = factors.calories.toFixed(3);
-  document.getElementById('calib_factor_pro').textContent = factors.protein.toFixed(3);
-  document.getElementById('calib_factor_fat').textContent = factors.fat.toFixed(3);
-  document.getElementById('calib_factor_carb').textContent = factors.carbs.toFixed(3);
+  saveCoachFactors();
 }
 
 function saveCoachFactors() {
-  const cal = parseFloat(document.getElementById('calib_factor_cal').textContent);
-  const pro = parseFloat(document.getElementById('calib_factor_pro').textContent);
-  const fat = parseFloat(document.getElementById('calib_factor_fat').textContent);
-  const carb = parseFloat(document.getElementById('calib_factor_carb').textContent);
-  if (isNaN(cal)) { alert('Calculate factors first'); return; }
-  state.coachFactors = { calories: cal, protein: pro, fat: fat, carbs: carb };
+  const moderateCal = parseFloat(document.getElementById('factor_moderate_cal').value);
+  const moderatePro = parseFloat(document.getElementById('factor_moderate_pro').value);
+  const intenseCal = parseFloat(document.getElementById('factor_intense_cal').value);
+  const intensePro = parseFloat(document.getElementById('factor_intense_pro').value);
+  if (![moderateCal, moderatePro, intenseCal, intensePro].every(v => Number.isFinite(v) && v >= 0)) {
+    alert('Enter valid non-negative factors');
+    return;
+  }
+  state.coachFactors = {
+    moderate: { calories: moderateCal, protein: moderatePro },
+    intense: { calories: intenseCal, protein: intensePro }
+  };
   closeCoachCalibModal();
   recalculate();
   MEAL_SLOTS.forEach(slot => renderMealItems(slot.id));
+  saveStateToCache();
 }
 
 
@@ -253,10 +263,20 @@ async function searchVNFoods(query) {
 // ============================================================
 // UI HELPERS
 // ============================================================
+function normalizeSearchText(value) {
+  return String(value || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd');
+}
+
 function getFoodSuggestions(query) {
   if (!query || query.length < 2) return [];
-  const q = query.toLowerCase();
-  return Object.keys(FOOD_DATABASE).filter(name => name.toLowerCase().includes(q)).slice(0, 8);
+  const q = normalizeSearchText(query);
+  return Object.keys(FOOD_DATABASE)
+    .filter(name => normalizeSearchText(name).includes(q))
+    .slice(0, 8);
 }
 
 function formatMacro(val) {
@@ -368,7 +388,7 @@ function addFoodItem(mealId) {
     return;
   }
 
-  const cookMethod = document.getElementById(`cook_method_${mealId}`).value || 'raw';
+  const cookMethod = document.getElementById(`cook_method_${mealId}`).value || 'fresh';
   state.meals[mealId].push({ food: foodName, grams, cookingMethod: cookMethod });
   input.value = '';
   gramsInput.value = '';
@@ -398,6 +418,8 @@ function renderMealItems(mealId) {
   container.innerHTML = items.map((item, idx) => {
     const macros = calculateFoodMacros(item.food, item.grams, item.cookingMethod);
     const unit = FOOD_DATABASE[item.food]?.unit || VN_FOOD_CACHE[item.food]?.unit || 'g';
+    const prep = normalizePrepMethod(item.cookingMethod);
+    const prepText = state.calibrationMode === 'coach' ? `<span class="food-amount">${getPrepLabel(prep)}</span>` : '';
     const macroText = macros
       ? `<span>${formatMacro(macros.calories)} kcal</span><span>P: ${formatMacro(macros.protein)}g</span><span>C: ${formatMacro(macros.carbs)}g</span><span>F: ${formatMacro(macros.fat)}g</span>`
       : '<span style="color:var(--danger)">⚠ Data unavailable (re-search food)</span>';
@@ -406,6 +428,7 @@ function renderMealItems(mealId) {
         <div class="food-item-name">
           <span class="food-name">${item.food}</span>
           <span class="food-amount">${item.grams} ${unit}</span>
+          ${prepText}
         </div>
         <div class="food-item-macros">${macroText}</div>
         <button class="remove-btn" onclick="removeFoodItem('${mealId}', ${idx})">✕</button>
@@ -546,9 +569,10 @@ function generatePDF() {
     const itemRows = items.map(item => {
       const m = calculateFoodMacros(item.food, item.grams, item.cookingMethod);
       const unit = FOOD_DATABASE[item.food]?.unit || VN_FOOD_CACHE[item.food]?.unit || 'g';
+      const prep = state.calibrationMode === 'coach' ? ' (' + getPrepLabel(item.cookingMethod) + ')' : '';
       return `
         <tr>
-          <td style="padding:6px 8px;border-bottom:1px solid #b0d4b0;">${item.food}</td>
+          <td style="padding:6px 8px;border-bottom:1px solid #b0d4b0;">${item.food}${prep}</td>
           <td style="padding:6px 8px;border-bottom:1px solid #b0d4b0;text-align:center;">${item.grams}${unit}</td>
           <td style="padding:6px 8px;border-bottom:1px solid #b0d4b0;text-align:center;">${formatMacro(m.calories)}</td>
           <td style="padding:6px 8px;border-bottom:1px solid #b0d4b0;text-align:center;">${formatMacro(m.protein)}g</td>
@@ -814,6 +838,17 @@ function loadStateFromCache() {
     if (!cached) return;
     const saved = JSON.parse(cached);
     Object.assign(state, saved);
+    Object.keys(state.meals || {}).forEach(function(mealId) {
+      state.meals[mealId].forEach(function(item) {
+        item.cookingMethod = normalizePrepMethod(item.cookingMethod);
+      });
+    });
+    if (!state.coachFactors || typeof state.coachFactors.calories === 'number') {
+      state.coachFactors = DEFAULT_COACH_FACTORS;
+    }
+    if (state.calibrationMode !== 'coach' && state.calibrationMode !== 'raw') {
+      state.calibrationMode = 'coach';
+    }
     // Restore UI from cached state
     if (state.client.name) document.getElementById('clientName').value = state.client.name;
     if (state.client.age) document.getElementById('clientAge').value = state.client.age;
@@ -824,8 +859,9 @@ function loadStateFromCache() {
     if (state.client.goal) document.getElementById('clientGoal').value = state.client.goal;
     if (state.client.notes) document.getElementById('clientNotes').value = state.client.notes;
     if (state.targetFormula) document.querySelector(`input[name="targetFormula"][value="${state.targetFormula}"]`).checked = true;
-    if (state.calibrationMode) document.querySelector(`input[name="calibMode"][value="${state.calibrationMode}"]`).checked = true;
-    setCalibrationMode(state.calibrationMode || 'raw');
+    const calibInput = document.querySelector(`input[name="calibMode"][value="${state.calibrationMode}"]`);
+    if (calibInput) calibInput.checked = true;
+    setCalibrationMode(state.calibrationMode || 'coach');
     recalculate();
   } catch(e) {}
 }
@@ -857,7 +893,7 @@ function printDiary() {
   const { name, weight, height, age, sex, activity, goal } = state.client;
   const targets = state.targets;
   const mode = state.targetFormula === 'herbalife' ? 'Herbalife Coach' : 'Normal';
-  const calibMode = state.calibrationMode === 'coach' ? 'Coach-Tuned' : state.calibrationMode === 'calibrated' ? 'Calibrated' : 'Raw/Label';
+  const calibMode = state.calibrationMode === 'coach' ? 'Coach Prep' : 'Raw/Label';
   const date = new Date().toLocaleDateString('vi-VN');
 
   let mealsHtml = '';
@@ -868,7 +904,7 @@ function printDiary() {
     let rows = items.map(item => {
       const m = calculateFoodMacros(item.food, item.grams, item.cookingMethod);
       const unit = FOOD_DATABASE[item.food]?.unit || VN_FOOD_CACHE[item.food]?.unit || 'g';
-      const cook = item.cookingMethod && item.cookingMethod !== 'raw' ? ' (' + item.cookingMethod + ')' : '';
+      const cook = state.calibrationMode === 'coach' ? ' (' + getPrepLabel(item.cookingMethod) + ')' : '';
       return '<tr><td>' + item.food + cook + '</td><td style="text-align:center">' + item.grams + ' ' + unit + '</td><td style="text-align:center">' + formatMacro(m.calories) + '</td><td style="text-align:center">' + formatMacro(m.protein) + 'g</td><td style="text-align:center">' + formatMacro(m.carbs) + 'g</td><td style="text-align:center">' + formatMacro(m.fat) + 'g</td></tr>';
     }).join('');
     mealsHtml += '<h3 style="margin:12px 0 4px;color:#2e7d32;">' + slot.label + ' — ' + formatMacro(t.calories) + ' kcal</h3>';
@@ -876,7 +912,8 @@ function printDiary() {
   });
 
   const totals = getDayTotals();
-  const factors = state.coachFactors ? 'Cal:' + state.coachFactors.calories + ' Pro:' + state.coachFactors.protein + ' Fat:' + state.coachFactors.fat + ' Carb:' + state.coachFactors.carbs : 'Not set';
+  const cf = getCoachFactors();
+  const factors = 'Nấu vừa Cal×' + cf.moderate.calories + ' Pro×' + cf.moderate.protein + ' | Nấu kỹ Cal×' + cf.intense.calories + ' Pro×' + cf.intense.protein;
 
   const html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Diary - ' + name + '</title><style>body{font-family:Arial,sans-serif;font-size:13px;padding:30px;max-width:800px;margin:auto}h1{color:#2e7d32;font-size:20px}h2{font-size:14px;margin:16px 0 6px;color:#1a2e1a}table{margin-bottom:8px}td,th{padding:4px 6px;border-bottom:1px solid #ccc}@media print{body{-webkit-print-color-adjust:exact}}</style></head><body>' +
     '<h1>🇻🇳 Nutrition Diary — ' + name + '</h1>' +
@@ -933,11 +970,12 @@ function printCalcLog() {
   }
   log += '<p>Carbs = (Target kcal - Protein×4 - Fat×9) ÷ 4 = <strong>' + targets.carbs + 'g</strong></p>';
 
-  if (calibMode === 'coach' && state.coachFactors) {
-    log += '<h2>Step 4: Coach-Tuned Calibration Applied</h2>';
-    log += '<p>Calorie factor: ×' + state.coachFactors.calories + ' → Final target: <strong>' + targets.calories + ' kcal</strong></p>';
-    log += '<p>Protein factor: ×' + state.coachFactors.protein + ' → Final: <strong>' + targets.protein + 'g</strong></p>';
-    log += '<p>Fat factor: ×' + state.coachFactors.fat + ' → Final: <strong>' + targets.fat + 'g</strong></p>';
+  if (calibMode === 'coach') {
+    log += '<h2>Step 4: Coach Prep Calibration Applied</h2>';
+    var cf = getCoachFactors();
+    log += '<p>Targets are not coach-adjusted. Food items use prep factors unless they are Herbalife products.</p>';
+    log += '<p>Nấu vừa: calories ×' + cf.moderate.calories + ', protein ×' + cf.moderate.protein + '</p>';
+    log += '<p>Nấu kỹ: calories ×' + cf.intense.calories + ', protein ×' + cf.intense.protein + '</p>';
   }
 
   // Per-meal breakdown
@@ -947,12 +985,14 @@ function printCalcLog() {
     if (items.length === 0) return;
     var t = getMealTotals(slot.id);
     log += '<h3>' + slot.label + ': ' + formatMacro(t.calories) + ' kcal (P:' + formatMacro(t.protein) + 'g C:' + formatMacro(t.carbs) + 'g F:' + formatMacro(t.fat) + 'g)</h3>';
-    if (calibMode === 'calibrated') {
+    if (calibMode === 'coach') {
       items.forEach(function(item) {
-        if (item.cookingMethod && item.cookingMethod !== 'raw') {
+        if (normalizePrepMethod(item.cookingMethod) !== 'fresh') {
           var food = FOOD_DATABASE[item.food] || VN_FOOD_CACHE[item.food];
-          var factors = (COOKING_FACTORS[item.cookingMethod] || {})[food ? food.category : ''] || {};
-          log += '<p style="font-size:11px;color:#555">  → ' + item.food + ': method=' + item.cookingMethod + ', RF_pro=' + (factors.rf_protein||1) + ', RF_fat=' + (factors.rf_fat||1) + ', RF_carb=' + (factors.rf_carbs||1) + ', oil_uptake=' + (factors.oil_uptake||0) + 'g/100g</p>';
+          var prep = normalizePrepMethod(item.cookingMethod);
+          var factors = getCoachFactors()[prep] || {};
+          var note = isHerbalifeFood(item.food, food) ? 'Herbalife product: no adjustment' : 'calories×' + factors.calories + ', protein×' + factors.protein;
+          log += '<p style="font-size:11px;color:#555">  → ' + item.food + ': ' + getPrepLabel(prep) + ', ' + note + '</p>';
         }
       });
     }
