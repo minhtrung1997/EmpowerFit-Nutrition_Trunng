@@ -24,7 +24,7 @@ jobs:
     environment: production
     env:
       HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
-      HEROKU_APP_NAME: house-of-health-pro
+      HEROKU_APP_NAME: ${{ vars.HEROKU_APP_NAME }}
 
     steps:
       - name: Check out repository
