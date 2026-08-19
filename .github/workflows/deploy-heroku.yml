@@ -6,8 +6,9 @@ on:
       - main
     paths-ignore:
       - ".github/**"
-      - "docs/**"
       - "**/*.md"
+      - "docs/**/*.html"
+      - "docs/**/*.pdf"
   workflow_dispatch:
 
 permissions:

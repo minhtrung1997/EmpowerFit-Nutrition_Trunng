@@ -1,5 +1,5 @@
 /* EmpowerFit Nutrition App - Stylesheet */
-@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
 
 :root {
   --bg-primary: #e8f0e8;
@@ -17,8 +17,8 @@
   --success: #1b5e20;
   --warning: #e65100;
   --danger: #c62828;
-  --font-display: 'Barlow Condensed', sans-serif;
-  --font-body: 'Barlow', sans-serif;
+  --font-display: 'Fredoka', 'Trebuchet MS', sans-serif;
+  --font-body: 'Nunito', 'Trebuchet MS', sans-serif;
 }
 
 /* Night mode */
