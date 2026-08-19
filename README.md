@@ -1,68 +1,44 @@
-# 🇻🇳 House of Health Well Pro — Nutrition Planner
+# EmpowerFit Nutrition Planner
 
-A self-hosted nutrition planning web app for Vietnamese health coaches, powered by Herbalife-style meal planning and a live Vietnamese food database.
+A responsive nutrition-planning app for Vietnamese health coaches. It combines goal-based macro targets, meal planning, cooking adjustments, and Vietnamese food search in one browser interface.
 
-## Features
+## Highlights
 
-- **Dual target formula**: Herbalife Coach (1.75g/kg, kcal/kg) or Normal (2.2g/kg, Mifflin-St Jeor)
-- **3 food calibration modes**: Raw/Label, Calibrated (cooking-adjusted), Coach-Tuned (reverse-calibrated)
-- **553+ local foods** (USDA + Vietnamese Nutrition Institute + Herbalife F1/PPP)
-- **1,250+ Vietnamese dishes** via live search (viendinhduong.vn API)
-- **9 goal presets** (Fat Loss → Enhanced Athlete)
-- **6 meal slots** with real-time progress tracking
-- **Night mode** toggle
-- **3 print outputs**: Client PDF, Diary record, Calculation Log
-- **Mobile responsive**
-- **State cached** in localStorage (persists across refreshes)
+- Herbalife Coach and Mifflin–St Jeor target formulas
+- Six meal slots with live macro totals
+- Local food database plus Vietnamese food API search
+- Coach notes, client PDF, diary, and calculation log
+- Light and dark themes
+- Browser storage that preserves plans across refreshes and restarts
 
-## Quick Start
+## Run locally
+
+Requires Python 3.13 or another recent Python 3 release.
 
 ```bash
 python3 server.py
-# Open http://localhost:8000
 ```
 
-## Project Structure
+Open <http://localhost:8000>.
 
-```
-├── index.html              # Single-page app
-├── server.py               # HTTP server + /api/vn-food proxy
-├── css/style.css           # Styles (light + dark theme)
-├── js/
-│   ├── app.js              # App logic, calibration, VN search, print
-│   └── foods.js            # Food database + cooking factors
-├── docs/
-│   ├── LABNOTE.md          # Development log
-│   ├── DEPLOYMENT.md       # AWS deployment guide
-│   ├── DEPLOYMENT_HEROKU.md # Heroku deployment guide
-│   ├── RELEASE.md          # Release notes
-│   ├── Macronutrient_research_formulae.pdf
-│   ├── images/             # Logo + background
-│   └── specs/
-│       └── function_calibration.md
-├── raw_data/               # Source databases
-├── scripts/                # DB conversion scripts
-└── README.md
+## Main files
+
+```text
+index.html       App interface
+css/style.css    UI styles and themes
+js/app.js        App behavior and calculations
+js/foods.js      Local food database
+server.py        Static server and Vietnamese food API proxy
 ```
 
-## Calculation Modes
+## Data storage
 
-| Target Formula | Protein | Calories |
-|---|---|---|
-| Herbalife Coach | 1.75 g/kg | kcal/kg (26–38 by goal) |
-| Normal | 2.2 g/kg | Mifflin-St Jeor × activity + goal adj |
+Client details and meal plans are stored in the browser's `localStorage`. Data is tied to the browser profile and site address; clearing site data removes it.
 
-| Food Calibration | Effect |
-|---|---|
-| Raw/Label | Database values as-is |
-| Calibrated | Cooking retention factors + yield + oil uptake |
-| Coach-Tuned | Blanket correction from coach's assessed totals |
+## Deployment
 
-## Deploy
-
-See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) (AWS) or [docs/DEPLOYMENT_HEROKU.md](docs/DEPLOYMENT_HEROKU.md) (Heroku).
+Pushes to `main` deploy automatically through GitHub Actions when application code or assets change. See the [Heroku deployment guide](docs/DEPLOYMENT_HEROKU.md) for setup and troubleshooting.
 
 ## Contact
 
-House of Health Well Pro
-📍 85 Tan Cang St
+House of Health Well Pro — 85 Tan Cang St
