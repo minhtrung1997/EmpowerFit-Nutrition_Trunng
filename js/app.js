@@ -296,6 +296,9 @@ function updateClientState() {
 
 function recalculate() {
   updateClientState();
+  // Client details can be entered before all calculation fields are complete.
+  // Persist them immediately instead of only saving meal-plan changes.
+  saveStateToCache();
   const { weight, height, age, sex, activity, goal } = state.client;
   if (!weight || !height || !age || !activity || !goal) return;
 

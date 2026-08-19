@@ -24,10 +24,10 @@ Internet → Heroku App (https://your-app.herokuapp.com)
 web: python3 server.py
 ```
 
-### `runtime.txt` (create in project root)
+### `.python-version` (create in project root)
 
 ```
-python-3.12.0
+3.13
 ```
 
 ### Modify `server.py` to use `$PORT`
